@@ -15,6 +15,7 @@
 package cloudant.com.envoydemo;
 
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -25,19 +26,15 @@ import android.widget.CheckBox;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-import com.cloudant.http.interceptors.BasicAuthInterceptor;
 import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.datastore.DatastoreManager;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentRevision;
-import com.cloudant.sync.replication.Replicator;
-import com.cloudant.sync.replication.ReplicatorBuilder;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 
 import java.io.File;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -173,52 +170,30 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         s.setAdapter(aa);
     }
 
-    // TODO don't run on gui thread
     public void pullData(final View v) {
 
         // pull any new data from server and display results on map
         try {
-            new DatastoreHelper<Void>(dsm, currentUser) {
-                public Void performOnDatastore(Datastore d) throws Exception {
-                    // envoy only supports basic auth, so switch it on
-                    BasicAuthInterceptor bai = new BasicAuthInterceptor(currentUser + ":" + users.get(currentUser));
-                    Replicator r = ReplicatorBuilder.pull().from(new URI(envoyDb)).to(ds).addRequestInterceptors(bai).build();
-                    r.start();
-                    while (r.getState() != Replicator.State.COMPLETE && r.getState() != Replicator.State.ERROR) {
-                        ;
-                    }
-                    mapAdaptor.populateMap(d);
-                    return null;
-                }
-            }.run();
+            PullDataTask p = new PullDataTask(currentUser, users.get(currentUser), dsm, this, envoyDb);
+            p.execute();
+            mapAdaptor.populateMap(this, currentUser, dsm);
         } catch (Exception e) {
             errorDialog(e.getMessage());
         }
     }
 
-    // TODO don't run on gui thread
     public void pushData() {
 
-        // push data (should we clear map?)
+        // push data (map clear happens in callee)
         try {
-            new DatastoreHelper<Void>(dsm, currentUser) {
-                public Void performOnDatastore(Datastore d) throws Exception {
-                    // envoy only supports basic auth, so switch it on
-                    BasicAuthInterceptor bai = new BasicAuthInterceptor(currentUser + ":" + users.get(currentUser));
-                    Replicator r = ReplicatorBuilder.push().to(new URI(envoyDb)).from(ds).addRequestInterceptors(bai).build();
-                    r.start();
-                    while (r.getState() != Replicator.State.COMPLETE && r.getState() != Replicator.State.ERROR) {
-                        ;
-                    }
-                    return null;
-                }
-            }.run();
+            PushDataTask p = new PushDataTask(currentUser, users.get(currentUser), dsm, this, envoyDb);
+            p.execute();
         } catch (Exception e) {
             errorDialog(e.getMessage());
         }
     }
 
-    private void errorDialog(String message) {
+    public void errorDialog(String message) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(message)
                 .setTitle("Error")
@@ -227,14 +202,19 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         dialog.show();
     }
 
-    private AlertDialog doingStuff(String message) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage(message)
-                .setTitle("Doing Stuff...")
-                .setPositiveButton(getString(R.string.accept), null);
-        AlertDialog dialog = builder.create();
-        return dialog;
+    public ProgressDialog doingStuff(String message) {
+        //show a spinner while we perform background query
+        ProgressDialog progress = new ProgressDialog(this);
+        progress.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        progress.setMessage(message);
+        //we don't know how long the work will take
+        progress.setIndeterminate(true);
+        //prevent interaction with the map while airports are loaded
+        progress.setCancelable(false);
+        progress.setCanceledOnTouchOutside(false);
+        //show the spinner
+        progress.show();
+        return progress;
     }
-
 
 }
