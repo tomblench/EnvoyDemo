@@ -1,22 +1,16 @@
 package cloudant.com.envoydemo;
 
-import android.widget.ArrayAdapter;
-
 import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.datastore.DatastoreException;
-import com.cloudant.sync.datastore.DatastoreManager;
 import com.cloudant.sync.datastore.DocumentException;
 import com.cloudant.sync.datastore.DocumentRevision;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapView;
-import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,17 +28,14 @@ public class MapAdaptor   {
     }
 
 
-    public String IdForMarker(Marker m) {
+    public String idForMarker(Marker m) {
         return markers.get(m);
     }
 
-    public void populateMap(DatastoreManager dsm, String user) throws DatastoreException, DocumentException {
+    public void populateMap(Datastore ds) throws DatastoreException, DocumentException {
 
         googleMap.clear();
         markers.clear();
-
-        Datastore ds = dsm.openDatastore(user+"-db");
-
 
         double maxLat = -180;
         double minLat = 180;
@@ -73,12 +64,8 @@ public class MapAdaptor   {
             }
         }
 
-        ds.close();
-
         LatLngBounds bounds = new LatLngBounds(new LatLng(minLat, minLon), new LatLng(maxLat, maxLon));
         googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 1));
-
-
     }
 
     public Marker addPoint(double lat, double lon, String title, String comments) {
