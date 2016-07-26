@@ -1,3 +1,17 @@
+/*
+ *  Copyright (c) 2016 IBM Corp. All rights reserved.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ *  except in compliance with the License. You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software distributed under the
+ *   License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ *  either express or implied. See the License for the specific language governing permissions
+ *  and limitations under the License.
+ */
+
 package cloudant.com.envoydemo;
 
 import com.cloudant.sync.datastore.Datastore;
@@ -37,10 +51,13 @@ public class MapAdaptor   {
         googleMap.clear();
         markers.clear();
 
+        // for finding the bounding box
         double maxLat = -180;
         double minLat = 180;
         double maxLon = -180;
         double minLon = 180;
+
+        // find all locations and populate with map with markers for each location
         for(String id : ds.getAllDocumentIds()) {
             DocumentRevision d = ds.getDocument(id);
             Map<String, Object> data = d.getBody().asMap();
@@ -64,6 +81,7 @@ public class MapAdaptor   {
             }
         }
 
+        // zoom to bounds of markers
         LatLngBounds bounds = new LatLngBounds(new LatLng(minLat, minLon), new LatLng(maxLat, maxLon));
         googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 1));
     }
