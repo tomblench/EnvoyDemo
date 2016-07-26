@@ -133,6 +133,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             final CheckBox cb = (CheckBox) findViewById(R.id.checkBox);
             tv.setText("");
             cb.setChecked(false);
+            mapAdaptor.clearMap();
         } catch (Exception e) {
             errorDialog(e.getMessage());
         }

@@ -46,6 +46,12 @@ public class MapAdaptor   {
         return markers.get(m);
     }
 
+    public void clearMap() {
+        googleMap.clear();
+        LatLng centre = new LatLng(0,0);
+        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(centre, 2.0f));
+    }
+
     public void populateMap(Datastore ds) throws DatastoreException, DocumentException {
 
         googleMap.clear();
