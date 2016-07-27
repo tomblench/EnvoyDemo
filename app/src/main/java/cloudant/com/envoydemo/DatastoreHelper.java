@@ -20,6 +20,11 @@ import com.cloudant.sync.datastore.DatastoreManager;
 
 /**
  * Created by tomblench on 26/07/2016.
+ *
+ * Helper to do the following:
+ * - Open datastore for a given user name (each datastore is named {user}-db)
+ * - Execute the performOnDatastore method which the implementer over-rides
+ * - Automatically close datastore either on successful execution or exception
  */
 abstract public class DatastoreHelper<R> {
 

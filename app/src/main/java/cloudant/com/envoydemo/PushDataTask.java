@@ -29,8 +29,7 @@ import java.net.URI;
  * Created by tomblench on 26/07/2016.
  */
 
-// TODO exception handling
-public class PushDataTask extends AsyncTask<Void, Void, Void> {
+public class PushDataTask extends AsyncTask<Void, Void, AsyncResult<Void>> {
 
     private String currentUser;
     private DatastoreManager dsm;
@@ -57,10 +56,10 @@ public class PushDataTask extends AsyncTask<Void, Void, Void> {
     }
 
     @Override
-    protected Void doInBackground(Void... dontcare) {
+    protected AsyncResult<Void> doInBackground(Void... dontcare) {
         try {
-            new DatastoreHelper<Void>(dsm, currentUser) {
-                public Void performOnDatastore(Datastore d) throws Exception {
+            return new DatastoreHelper<AsyncResult<Void>>(dsm, currentUser) {
+                public AsyncResult<Void> performOnDatastore(Datastore d) throws Exception {
                     // envoy only supports basic auth, so switch it on
                     BasicAuthInterceptor bai = new BasicAuthInterceptor(currentUser + ":" + password);
                     Replicator r = ReplicatorBuilder.push().to(new URI(envoyDb)).from(ds).addRequestInterceptors(bai).build();
@@ -68,19 +67,25 @@ public class PushDataTask extends AsyncTask<Void, Void, Void> {
                     while (r.getState() != Replicator.State.COMPLETE && r.getState() != Replicator.State.ERROR) {
                         ;
                     }
-                    return null;
+                    if (r.getState() == Replicator.State.ERROR) {
+                        // TODO we can get the actual error from the eventbus if we subscribe
+                        return new AsyncResult<Void>(new RuntimeException("Push replication failed"));
+                    }
+                    return new AsyncResult<Void>((Void)null);
                 }
             }.run();
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            return new AsyncResult<Void>(e);
         }
-        return null;
     }
 
     @Override
-    protected void onPostExecute(Void dontcare) {
+    protected void onPostExecute(AsyncResult<Void> result) {
         if (pd != null) {
             pd.dismiss();
+        }
+        if (result.exception != null ) {
+            mainActivity.errorDialog(result.exception.getMessage());
         }
     }
 }

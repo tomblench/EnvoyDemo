@@ -17,11 +17,7 @@ package cloudant.com.envoydemo;
 import android.os.AsyncTask;
 import android.util.Pair;
 
-import com.cloudant.sync.datastore.Datastore;
-import com.cloudant.sync.datastore.DatastoreException;
 import com.cloudant.sync.datastore.DatastoreManager;
-import com.cloudant.sync.datastore.DocumentException;
-import com.cloudant.sync.datastore.DocumentRevision;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
@@ -57,7 +53,7 @@ public class MapAdaptor {
     }
 
     public void populateMap(MainActivity ma, String user, DatastoreManager dsm) {
-        AsyncTask<Void,Void,List<Pair<String,MarkerOptions>>> task = new PopulateMapTask(ma, user, dsm, this);
+        AsyncTask<Void,Void,AsyncResult<List<Pair<String,MarkerOptions>>>> task = new PopulateMapTask(ma, user, dsm, this);
         task.execute();
     }
 

@@ -31,7 +31,8 @@ import java.util.Map;
 /**
  * Created by tomblench on 26/07/2016.
  */
-public class PopulateMapTask extends AsyncTask<Void, Void, List<Pair<String,MarkerOptions>>> {
+
+public class PopulateMapTask extends AsyncTask<Void, Void, AsyncResult<List<Pair<String,MarkerOptions>>>> {
 
     private MapAdaptor ma;
     private String currentUser;
@@ -52,12 +53,12 @@ public class PopulateMapTask extends AsyncTask<Void, Void, List<Pair<String,Mark
     }
 
     @Override
-    protected List<Pair<String,MarkerOptions>> doInBackground(Void... dontcare) {
-        final List<Pair<String,MarkerOptions>> markers = new ArrayList<>();
+    protected AsyncResult<List<Pair<String,MarkerOptions>>> doInBackground(Void... dontcare) {
         try {
-            new DatastoreHelper<Void>(dsm, currentUser) {
-                public Void performOnDatastore(Datastore ds) throws Exception {
+            return new DatastoreHelper<AsyncResult<List<Pair<String,MarkerOptions>>>>(dsm, currentUser) {
+                public AsyncResult<List<Pair<String,MarkerOptions>>> performOnDatastore(Datastore ds) throws Exception {
                     // find all locations and populate with map with markers for each location
+                    final List<Pair<String,MarkerOptions>> markers = new ArrayList<>();
                     for (String id : ds.getAllDocumentIds()) {
                         DocumentRevision d = ds.getDocument(id);
                         Map<String, Object> data = d.getBody().asMap();
@@ -70,16 +71,12 @@ public class PopulateMapTask extends AsyncTask<Void, Void, List<Pair<String,Mark
                             markers.add(pair);
                         }
                     }
-                    return null;
+                    return new AsyncResult<List<Pair<String, MarkerOptions>>>(markers);
                 }
             }.run();
         } catch (Exception e) {
-            if (pd != null) {
-                pd.dismiss();
-            }
-            mainActivity.errorDialog(e.getMessage());
+            return new AsyncResult<List<Pair<String, MarkerOptions>>>(e);
         }
-        return markers;
     }
 
     public MarkerOptions newPoint(double lat, double lon, String title, String comments, String id) {
@@ -91,10 +88,14 @@ public class PopulateMapTask extends AsyncTask<Void, Void, List<Pair<String,Mark
     }
 
     @Override
-    protected void onPostExecute(List<Pair<String,MarkerOptions>> markers) {
-        ma.addPoints(markers);
+    protected void onPostExecute(AsyncResult<List<Pair<String,MarkerOptions>>> result) {
         if (pd != null) {
             pd.dismiss();
+        }
+        if (result.exception != null) {
+            mainActivity.errorDialog(result.exception.getMessage());
+        } else {
+            ma.addPoints(result.result);
         }
     }
 

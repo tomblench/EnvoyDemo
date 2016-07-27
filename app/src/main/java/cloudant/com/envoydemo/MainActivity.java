@@ -154,7 +154,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         } catch (Exception e) {
             errorDialog(e.getMessage());
         }
-
     }
 
     public void populateUsers() {
@@ -171,26 +170,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     public void pullData(final View v) {
-
         // pull any new data from server and display results on map
-        try {
-            PullDataTask p = new PullDataTask(currentUser, users.get(currentUser), dsm, this, envoyDb);
-            p.execute();
-            mapAdaptor.populateMap(this, currentUser, dsm);
-        } catch (Exception e) {
-            errorDialog(e.getMessage());
-        }
+        PullDataTask p = new PullDataTask(currentUser, users.get(currentUser), dsm, this, envoyDb);
+        p.execute();
+        mapAdaptor.populateMap(this, currentUser, dsm);
     }
 
     public void pushData() {
-
         // push data (map clear happens in callee)
-        try {
-            PushDataTask p = new PushDataTask(currentUser, users.get(currentUser), dsm, this, envoyDb);
-            p.execute();
-        } catch (Exception e) {
-            errorDialog(e.getMessage());
-        }
+        PushDataTask p = new PushDataTask(currentUser, users.get(currentUser), dsm, this, envoyDb);
+        p.execute();
     }
 
     public void errorDialog(String message) {
