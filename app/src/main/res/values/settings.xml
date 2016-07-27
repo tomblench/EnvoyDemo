@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="envoy_url">http://10.0.2.2:8001/db</string>
+    <array name="users">
+        <item>rita:password</item>
+        <item>sue:password</item>
+        <item>bob:password</item>
+    </array>
+</resources>

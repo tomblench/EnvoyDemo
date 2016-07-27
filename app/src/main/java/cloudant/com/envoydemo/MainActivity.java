@@ -42,7 +42,7 @@ import java.util.Map;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
 
-    private String envoyDb = "http://10.0.2.2:8001/db";
+    private String envoyDb;
     private Map<String, String> users;
     private DatastoreManager dsm;
     private MapAdaptor mapAdaptor;
@@ -54,6 +54,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        envoyDb = getString(R.string.envoy_url);
 
         // setup the google map
         MapFragment mapFragment = (MapFragment) getFragmentManager()
@@ -159,9 +160,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void populateUsers() {
         // populate username/password pairs
         users = new HashMap<>();
-        users.put("rita", "password");
-        users.put("sue", "password");
-        users.put("bob", "password");
+        String[] rawUsers = getResources().getStringArray(R.array.users);
+        for (String rawUser : rawUsers) {
+            String[] parts = rawUser.split(":");
+            users.put(parts[0], parts[1]);
+        }
         // sync to dropdown
         Spinner s = (Spinner)findViewById(R.id.spinner);
         List<String> names = new ArrayList<>(users.keySet());
@@ -198,7 +201,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         progress.setMessage(message);
         //we don't know how long the work will take
         progress.setIndeterminate(true);
-        //prevent interaction with the map while airports are loaded
+        //prevent interaction whilst message is displayed
         progress.setCancelable(false);
         progress.setCanceledOnTouchOutside(false);
         //show the spinner
