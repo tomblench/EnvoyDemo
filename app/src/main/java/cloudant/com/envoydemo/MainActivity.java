@@ -83,7 +83,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
             }.run();
         } catch (Exception e) {
-            errorDialog(e.getMessage());
+            errorDialog(e);
         }
         return false;
     }
@@ -116,7 +116,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             currentUser = (String) s.getSelectedItem();
             pullData(v);
         } catch (Exception e) {
-            errorDialog(e.getMessage());
+            errorDialog(e);
         }
     }
 
@@ -132,7 +132,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             cb.setChecked(false);
             mapAdaptor.clearMap();
         } catch (Exception e) {
-            errorDialog(e.getMessage());
+            errorDialog(e);
         }
     }
 
@@ -152,7 +152,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
             }.run();
         } catch (Exception e) {
-            errorDialog(e.getMessage());
+            errorDialog(e);
         }
     }
 
@@ -182,9 +182,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         p.execute();
     }
 
-    public void errorDialog(String message) {
+    public void errorDialog(Throwable t) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage(message)
+        builder.setMessage(t.getMessage() + ": " + t.getCause())
                 .setTitle("Error")
                 .setPositiveButton(getString(R.string.accept), null);
         AlertDialog dialog = builder.create();

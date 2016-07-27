@@ -20,10 +20,14 @@ import android.os.AsyncTask;
 import com.cloudant.http.interceptors.BasicAuthInterceptor;
 import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.datastore.DatastoreManager;
+import com.cloudant.sync.event.Subscribe;
+import com.cloudant.sync.notifications.ReplicationCompleted;
+import com.cloudant.sync.notifications.ReplicationErrored;
 import com.cloudant.sync.replication.Replicator;
 import com.cloudant.sync.replication.ReplicatorBuilder;
 
 import java.net.URI;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * Created by tomblench on 26/07/2016.
@@ -37,6 +41,8 @@ public class PullDataTask extends AsyncTask<Void, Void, AsyncResult<Void>> {
     private ProgressDialog pd;
     private String envoyDb;
     private String password;
+    private CountDownLatch latch;
+    private AsyncResult<Void> result;
 
     public PullDataTask(String currentUser,
                         String password,
@@ -48,6 +54,7 @@ public class PullDataTask extends AsyncTask<Void, Void, AsyncResult<Void>> {
         this.dsm = dsm;
         this.mainActivity = mainActivity;
         this.envoyDb = envoyDb;
+        this.latch = new CountDownLatch(1);
     }
 
     @Override
@@ -63,15 +70,10 @@ public class PullDataTask extends AsyncTask<Void, Void, AsyncResult<Void>> {
                     // envoy only supports basic auth, so switch it on
                     BasicAuthInterceptor bai = new BasicAuthInterceptor(currentUser + ":" + password);
                     Replicator r = ReplicatorBuilder.pull().from(new URI(envoyDb)).to(ds).addRequestInterceptors(bai).build();
+                    r.getEventBus().register(PullDataTask.this);
                     r.start();
-                    while (r.getState() != Replicator.State.COMPLETE && r.getState() != Replicator.State.ERROR) {
-                        ;
-                    }
-                    if (r.getState() == Replicator.State.ERROR) {
-                        // TODO we can get the actual error from the eventbus if we subscribe
-                        return new AsyncResult<Void>(new RuntimeException("Pull replication failed"));
-                    }
-                    return new AsyncResult<Void>((Void)null);
+                    latch.await();
+                    return result;
                 }
             }.run();
         } catch (Exception e) {
@@ -85,7 +87,20 @@ public class PullDataTask extends AsyncTask<Void, Void, AsyncResult<Void>> {
             pd.dismiss();
         }
         if (result.exception != null ) {
-            mainActivity.errorDialog(result.exception.getMessage());
+            mainActivity.errorDialog(result.exception);
         }
     }
+
+    @Subscribe
+    public void onReplicationErrored(ReplicationErrored re) {
+        result = new AsyncResult<Void>(re.errorInfo.getException());
+        latch.countDown();
+    }
+
+    @Subscribe
+    public void onReplicationCompleted(ReplicationCompleted rc) {
+        result = new AsyncResult<Void>((Void)null);
+        latch.countDown();
+    }
+
 }

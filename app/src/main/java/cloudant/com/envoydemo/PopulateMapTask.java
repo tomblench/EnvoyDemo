@@ -93,7 +93,7 @@ public class PopulateMapTask extends AsyncTask<Void, Void, AsyncResult<List<Pair
             pd.dismiss();
         }
         if (result.exception != null) {
-            mainActivity.errorDialog(result.exception.getMessage());
+            mainActivity.errorDialog(result.exception);
         } else {
             ma.addPoints(result.result);
         }
